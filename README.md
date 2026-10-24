@@ -1,213 +1,246 @@
-Sales Performance Analysis Dashboard | Power BI
-1. Project Overview
-This project focuses on analyzing sales performance using Microsoft Power BI. The objective was to transform raw sales data into an interactive dashboard that provides insights into revenue, profitability, product performance, customer behavior, geographical performance, sales trends, and product returns.
-The project involved several stages, starting with data preparation and transformation using Power Query, followed by data modeling, DAX measure development, and interactive dashboard design.
-Throughout the process, I encountered data preparation challenges that required understanding the underlying business logic to ensure accurate calculations and reliable analytical results.
-Project Objectives
-- Analyze overall sales performance and key business KPIs.
-- Evaluate revenue, cost, profit, and gross profit margin.
-- Identify top-performing products and product categories.
-- Analyze sales performance across geographical regions.
-- Understand customer purchasing behavior and order frequency.
-- Examine sales trends over time.
-- Analyze product returns and return quantities.
-Tools and Technologies
-- Microsoft Power BI: Data modeling, DAX calculations, and dashboard development.
-- Power Query: ETL, data transformation, merging queries, and data preparation.
-- DAX (Data Analysis Expressions): Measures, KPI calculations, and time intelligence.
-- Data Modeling: Relationships between fact and dimension tables.
-- Data Visualization: Interactive reports and business performance analysis.
-2. Data Source and Structure
-The project started with a collection of nine Excel files containing data related to sales transactions, customers, products, geographical information, product costs, and returns.
-The files contained data organized across multiple related tables, requiring transformation and integration before they could be used effectively for analysis.
-The dataset included the following tables:
-Table	Purpose
-Customers	Customer-related information
-Geography	Geographical attributes
-Products	Product information
-Product Cost History	Product cost information
-Product Subcategory	Product subcategory information
-Region	Regional information
-Sales Details	Transaction-level sales data
-Sales Header	Order-level information
-Sales Returns	Product return information
+# Sales Performance Analysis Dashboard | Power BI
 
+## 1. Project Overview
 
-The Sales Details table served as the primary sales fact table, containing transaction-level information such as product identifiers, quantities, unit prices, and sales amounts.
-The Sales Header table contained order-level information, including discount amounts, while the remaining tables provided additional context for analyzing sales by product, customer, geography, and other dimensions.
-The initial challenge was to integrate these data sources while preserving the correct business meaning of each field.
-3. Data Preparation and ETL Using Power Query
-I used Power Query to perform the ETL process, which involved extracting data from the Excel files, transforming the tables, and preparing the resulting dataset for analysis.
-The main objective was to integrate the required information into a consistent structure while addressing data issues that could affect the accuracy of the final calculations.
-3.1 Integrating Product Cost Information
-One of the first challenges was retrieving product cost information.
-The cost data was stored separately in the Product Cost History table, while the Sales Details table contained the sales transactions required for profitability analysis.
-To calculate profit correctly, the relevant cost information had to be integrated into the sales data.
-However, I discovered that product cost was not necessarily constant. It varied depending on the product and the country.
-This meant that matching records using the product identifier alone would not always retrieve the appropriate cost.
-Solution:
-I used Power Query's Merge Queries functionality to combine the relevant tables using multiple matching fields, including the information required to identify the appropriate product and country.
-This allowed me to retrieve the corresponding cost information for the sales records and prepare the data for subsequent profitability calculations.
-Key learning: Data integration requires understanding the business rules behind the data, not simply matching tables using a single identifier.
-3.2 Integrating Sales Header and Sales Details
-Another important challenge involved combining the Sales Header and Sales Details tables.
-The two tables operated at different levels of detail:
-- Sales Header: Contained order-level information, with each order represented by a single record.
-- Sales Details: Contained transaction-line information, where an order could contain multiple product lines.
-The Sales Details table included information such as unit price, unit cost, and quantity, while the Sales Header table contained the total discount associated with an order.
-I merged the two tables in Power Query to bring the required order-level information into the sales details.
-However, this introduced a potential double-counting problem.
-3.3 Challenge: Preventing Discount Duplication
-After merging the tables, I noticed that the total discount for an order was repeated across every sales detail row belonging to that order.
-For example, consider an order with a total discount of $100 and ten product lines.
-Before the merge, the order-level discount appeared once in Sales Header.
-After the merge, the same $100 discount appeared on all ten rows in Sales Details.
-If these values were summed directly, the resulting discount would be $1,000 instead of the correct $100.
-This would inflate the total discount and could distort subsequent financial calculations.
-Solution: Allocating the Order-Level Discount Across Product Lines
-To address this issue, I used the sales value of each product line to determine its proportion of the total order sales.
-The objective was to allocate the order-level discount proportionally across the individual product lines rather than repeating the full discount on every row.
-The allocation logic can be expressed as follows:
-Step 1: Calculate the proportion of each line's sales value within the order.
-\[
-\text{Line Sales Share}
-=
-\frac{\text{Line Sales Value}}
-{\text{Total Order Sales Value}}
-\]
-Step 2: Calculate the discount allocated to each line.
-\[
-\text{Line Discount}
-=
-\text{Order Discount}
-\times
-\text{Line Sales Share}
-\]
-For example, suppose an order has the following characteristics:
-- Total order sales: $1,000
-- Total order discount: $100
-- Product line sales value: $200
-The product line represents 20% of the order's total sales.
-Its allocated discount would therefore be:
-\[
-100 \times \frac{200}{1000} = \$20
-\]
-The allocated discounts across all product lines should add up to the original $100 order discount, assuming the allocation uses the complete set of order lines and the same sales-value basis.
-This approach prevents the full order-level discount from being counted repeatedly and provides a more appropriate line-level discount value.
-The transformation was performed during the data preparation stage using Power Query, before developing the DAX measures.
-Key learning: Understanding the granularity of a dataset is essential when combining tables. Order-level values must be handled differently from transaction-level values to avoid double counting.
-4. Data Modeling
-After completing the ETL and data preparation stages, I established relationships between the relevant tables in Power BI.
-The objective was to create a data model that supported consistent calculations and enabled analysis across multiple business dimensions.
-4.1 Establishing Relationships
-I created relationships between the sales data and the supporting tables, including product, customer, geographical, and other relevant information.
-This enabled the report to analyze sales performance from different perspectives without requiring every descriptive attribute to be stored directly in the fact table.
-The Sales Details table served as the central source for transaction-level sales analysis.
-4.2 Creating a Calendar Table
-I created a dedicated Calendar table to support time-based analysis and DAX Time Intelligence calculations.
-A separate date table makes it possible to analyze sales performance across different periods and compare results between years or other time intervals.
-It also provides a consistent date dimension for time-based filtering and reporting.
-This enabled the development of measures comparing current-period performance with the corresponding period in the previous year.
-5. DAX Measures and KPI Development
-After preparing the data and establishing the model relationships, I started developing DAX measures to calculate the main business performance indicators.
-These measures were used to support the dashboard's financial analysis and comparisons across different dimensions.
-The measures included calculations related to:
+This project focuses on analyzing sales performance over a four-year period across multiple geographical regions using Microsoft Power BI.
+
+The main objective is to transform raw sales data into an interactive dashboard that helps stakeholders understand business performance, identify sales trends, evaluate product and regional profitability, analyze product returns, and gain insights into customer behavior.
+
+The project covers the complete data analysis workflow, including data preparation, data modeling, DAX measure development, dashboard design, and business insights.
+
+## 2. Data Source and Structure
+
+The project uses an Excel dataset containing nine related tables in a normalized structure.
+
+The original dataset includes information about:
+
+- Sales transactions and order details
+- Customers and geographical locations
+- Products and product categories
+- Historical product costs
+- Sales returns
+
+The data was imported into Power BI, where Power Query was used to prepare and transform it for analysis.
+
+## 3. Data Preparation and ETL
+
+### Power Query Transformations
+
+The initial data preparation process involved cleaning and transforming the source tables to create a more analysis-friendly structure.
+
+The main steps included:
+
+- Importing the source tables into Power BI.
+- Transforming the normalized source data into a structure suitable for reporting.
+- Merging related tables to bring the required business attributes into the sales data.
+- Handling historical product costs and order-level discounts.
+- Preparing the final tables for data modeling and analysis.
+
+### Challenge 1: Integrating Historical Product Costs
+
+Product costs were stored in a separate table and varied according to the product, country, year, and month.
+
+To retrieve the correct cost for each sales record, I merged the sales data with the product cost history using four matching fields:
+
+- Product
+- Country
+- Year
+- Month
+
+This approach helped associate sales records with the relevant historical product costs instead of applying a single cost value across different periods or locations.
+
+### Challenge 2: Allocating Order-Level Discounts
+
+The Sales Header table contained order-level information, including the total discount, while the Sales Details table contained individual order line items.
+
+Merging these tables introduced a potential double-counting issue because the same order-level discount could be repeated across multiple sales lines.
+
+To address this, I used each line item's share of the order's total sales value to allocate the order-level discount proportionally across its line items.
+
+This approach was designed to distribute the discount according to each line item's contribution to the order and reduce the risk of overstating total discounts.
+
+## 4. Data Modeling
+
+After completing the data preparation process, I organized the data model around the following tables:
+
+### Dimension Tables
+- **Products:** Product-level information used for product and category analysis.
+- **Customers:** Customer information used to analyze customer behavior and performance.
+
+### Fact Tables
+- **Sales Details:** Transaction-level sales information used to calculate sales, costs, quantities, and profitability.
+- **Sales Returns:** Returned product information used to analyze return quantities and values.
+
+### Calendar Table
+
+I created a dedicated Calendar table using DAX with the `CALENDARAUTO()` function to support time-based analysis.
+
+Relationships were established between the relevant tables to enable consistent filtering and analysis across products, customers, sales, returns, and dates.
+
+## 5. DAX Measures and KPIs
+
+I developed DAX measures to evaluate business performance and support the dashboard's analytical requirements.
+
+The key measures include:
+
 - Revenue
 - Cost
 - Profit
-- Gross Profit Margin
+- Gross Margin
 - Quantity Sold
-- Previous-Year Revenue
-- Revenue Variance
-- Revenue Variance Percentage
-Year-over-Year Analysis
-Using the Calendar table and DAX Time Intelligence functions, I developed calculations to compare current performance with the corresponding period in the previous year.
-The general logic for revenue variance is:
-\[
-\text{Revenue Variance}
-=
-\text{Current Revenue}
--
-\text{Previous-Year Revenue}
-\]
-The variance percentage is:
-\[
-\text{Variance \%}
-=
-\frac{\text{Revenue Variance}}
-{\text{Previous-Year Revenue}}
-\times 100
-\]
-These calculations help evaluate whether revenue increased or decreased relative to the previous year.
-The same general comparison approach can be applied to other metrics when the corresponding measures and comparison periods are defined appropriately.
-6. Dashboard Development
-After completing the data preparation, modeling, and calculation stages, I developed six report pages in Power BI.
-Each page focused on a different aspect of business performance.
-6.1 Main Dashboard
-The main dashboard provides an overview of overall business performance through key performance indicators and visualizations.
-It serves as the starting point for understanding the overall sales results.
-6.2 Time Analysis
-The time analysis page focuses on sales performance over time.
-It supports the examination of sales trends and comparisons between different periods, helping identify changes in business performance.
-6.3 Product Analysis
-The product analysis page examines performance across products and product categories.
-It supports comparisons involving revenue, cost, profit, and other relevant product-level metrics.
-6.4 Location Analysis
-The location analysis page explores sales performance across geographical areas.
-It helps compare markets and identify differences in sales results between countries and regions.
-6.5 Customer Analysis
-The customer analysis page focuses on customer-related metrics and purchasing behavior.
-It includes analysis of customer distribution and order frequency to help understand how customers interact with the business.
-6.6 Returns Analysis
-The returns analysis page examines product returns and return quantities.
-It helps identify products associated with higher return volumes and provides an additional perspective on product performance.
-7. Key Analytical Areas
-The report was designed to explore several business questions.
-Sales Performance
-- How is overall revenue performing?
-- How has revenue changed compared with the previous year?
-- Which products and categories contribute most to revenue?
-Profitability
-- How do revenue, cost, and profit compare across products?
-- Which products or geographical areas contribute most to profit?
-- How does gross profit margin vary across the business?
-Customer Behavior
-- How are customers distributed across the dataset?
-- How frequently do customers place orders?
-- Which customer-related patterns can be observed in the available data?
-Geographical Performance
-- Which countries generate the highest revenue?
-- How does profitability differ across geographical areas?
-Product Returns
-- Which products have the highest return quantities?
-- What patterns can be observed in the available returns data?
-These questions provide a framework for exploring the dataset and interpreting the results presented in the dashboard.
-8. Challenges and Lessons Learned
-This project provided practical experience in addressing data preparation challenges that could affect the reliability of a business intelligence solution.
-The main challenges included:
-1. Integrating data from multiple Excel files
-Combining information from nine files required understanding the structure and purpose of the individual tables.
-2. Handling product cost variations
-Product cost depended on both the product and the country, requiring multiple matching fields when integrating cost information.
-3. Preventing discount double counting
-Merging order-level discount information into a transaction-level fact table caused the discount to repeat across multiple product lines. Allocating the discount according to each line's share of order sales addressed this issue.
-4. Preparing the data model for analysis
-Establishing table relationships and creating a dedicated Calendar table provided the foundation for multidimensional and time-based analysis.
-5. Translating data into business reporting
-Developing six report pages helped organize the analysis into distinct business perspectives, making it easier to explore sales, profitability, customers, geography, time, and returns.
-The project reinforced the importance of understanding data granularity, validating calculations, and considering business logic before drawing conclusions from analytical results.
-9. Conclusion
-This project represents my first end-to-end practical data analysis project using Microsoft Power BI.
-It provided an opportunity to apply data preparation, ETL, data modeling, DAX, and data visualization skills to a sales dataset.
-Beyond building the dashboards, one of the most valuable parts of the experience was identifying and addressing data issues that could distort financial calculations.
-The project strengthened my understanding of how a reliable business intelligence report depends on both technical implementation and a clear understanding of the underlying business data.
-I look forward to continuing to develop my data analysis skills through additional projects and more advanced analytical challenges.
-10. Project Screenshots
-Screenshots of the six report pages will be included below to demonstrate the dashboard's structure and analytical capabilities.
-Dashboard Page	Description
-Main Dashboard	Overall business performance and KPIs
-Time Analysis	Sales trends and period comparisons
-Product Analysis	Product and category performance
-Location Analysis	Geographical sales performance
-Customer Analysis	Customer distribution and order frequency
-Returns Analysis	Product returns and return quantities
+- Number of Customers
+- Number of Orders
+- Average Order Value (AOV)
+- Year-over-Year (YoY) Analysis
+- Month-over-Month (MoM) Analysis
+- Variance and Variance Percentage
+- Customer Purchase Frequency
+- Customer Churn Analysis
+- Returned Quantity and Return Value
+
+These measures support comparisons across different periods, products, customer groups, and geographical regions.
+
+## 6. Dashboard Pages
+
+The final Power BI dashboard consists of six analytical pages.
+
+### Page 1: Main Dashboard
+
+Provides an overview of overall business performance across the four-year period.
+
+Key metrics and analyses include:
+
+- Revenue, Profit, Cost, and Gross Margin
+- Quantity Sold, Customers, and Orders
+- Quarterly sales performance
+- Revenue by product subcategory
+- Revenue by continent
+- Performance by business type
+
+### Page 2: Location Analysis
+
+Examines sales and profitability across geographical regions.
+
+Key analyses include:
+
+- Annual geographical performance
+- Top-performing cities and states by sales
+- Sales and quantity comparisons across countries
+- Sales and profit comparisons across countries
+
+### Page 3: Returns Analysis
+
+Focuses on product returns and their potential business impact.
+
+Key analyses include:
+
+- Total returned quantity
+- Return value
+- Monthly return trends
+- Returns by product category
+- Returned quantity by product
+
+### Page 4: Time Analysis
+
+Evaluates business performance over time and highlights changes in sales.
+
+Key analyses include:
+
+- Monthly, quarterly, and yearly sales trends
+- Year-over-Year revenue comparisons
+- Month-over-Month revenue comparisons
+- Time-based performance analysis using a matrix visual
+
+### Page 5: Product Analysis
+
+Evaluates product performance and profitability to identify opportunities for improvement.
+
+Key analyses include:
+
+- Top 10 products by sales
+- Sales and profit comparisons across product categories
+- Cost and gross margin comparisons across categories
+- Differences in sales performance between products
+
+### Page 6: Customer Analysis
+
+Explores customer purchasing behavior, frequency, and retention patterns.
+
+Key analyses include:
+
+- Customer purchase frequency
+- Customer churn analysis
+- Customers who become inactive or stop purchasing
+- Customer activity across countries
+- Customer counts and the profit associated with customers in each country
+
+## 7. Key Insights and Business Opportunities
+
+The analysis highlighted several findings and opportunities for further investigation.
+
+### Sales Performance and Growth
+- Sales increased substantially across the analyzed years.
+- Quarterly sales totals were relatively similar across the four-year period, while overall annual sales showed considerable growth.
+- Sales performance varied significantly between products, indicating opportunities to review underperforming products and explore bundles or promotions where appropriate.
+
+### Product Returns
+- The total return value approached 7 million in the dataset's reporting units, making returns an important area for further investigation.
+- June showed the highest return activity and the lowest sales during the observed three-year period, suggesting a potential seasonal pattern worth examining.
+
+### Geographical Performance
+- Brazil had the fourth-highest customer count but relatively low profitability compared with its customer base. Further analysis of product mix, pricing, and costs could help explain this result.
+- France showed strong product profitability, suggesting an opportunity to investigate potential market expansion.
+- Germany and the United Kingdom, along with Brazil and France, were identified as markets worth exploring for additional growth opportunities.
+
+### Customer Retention
+- The analysis indicated substantial year-to-year customer losses alongside the acquisition of new customers.
+- This pattern highlights the importance of investigating customer retention, repeat purchasing behavior, and the factors associated with customer inactivity.
+
+These findings can support further analysis and help stakeholders prioritize potential business actions. The proposed opportunities should be validated with additional investigation before implementation.
+
+## 8. Challenges and Lessons Learned
+
+This project provided practical experience in solving data preparation and analytical challenges, including:
+
+- Integrating historical product costs using multiple matching fields.
+- Handling differences in granularity between order-level and line-item-level data.
+- Allocating order-level discounts to individual sales lines.
+- Building a relational data model for analytical reporting.
+- Developing DAX measures for financial and time-based analysis.
+- Designing a multi-page dashboard to explore business performance from different perspectives.
+- Translating analytical findings into potential business recommendations.
+
+## 9. Tools and Technologies
+
+- **Microsoft Power BI** — Dashboard development and data visualization
+- **Power Query** — Data transformation and preparation
+- **DAX** — Calculated measures and time-based analysis
+- **Microsoft Excel** — Source data
+
+## 10. Project Objectives
+
+The project demonstrates the practical application of data analytics skills to a business-oriented sales dataset, with a focus on:
+
+- Data cleaning and transformation
+- Data modeling
+- Business KPI development
+- Sales and profitability analysis
+- Time-series analysis
+- Product returns analysis
+- Customer behavior and retention analysis
+- Interactive dashboard design
+- Insight generation and business recommendations
+
+## 11. Project Screenshots
+
+Dashboard screenshots will be added here to demonstrate the final report pages and key visualizations.
+
+## 12. Conclusion
+
+This project demonstrates an end-to-end Power BI workflow, from preparing raw data and building a data model to developing DAX measures and delivering an interactive sales performance dashboard.
+
+By analyzing sales trends, profitability, product returns, geographical performance, and customer behavior, the project illustrates how data analytics can help identify business patterns, investigate performance issues, and highlight opportunities for improvement.
+
+**Project Type:** Sales Performance Analysis  
+**Tool:** Microsoft Power BI  
+**Focus Areas:** Data Preparation, Data Modeling, DAX, Business Intelligence, and Data Visualization
